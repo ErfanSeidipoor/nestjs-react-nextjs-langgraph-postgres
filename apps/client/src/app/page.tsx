@@ -7,7 +7,7 @@ interface MessageEventData {
   hello: string;
 }
 
-const SSEComponent: React.FC = (chatId: string) => {
+const SSEComponent: React.FC = () => {
   const [messages, setMessages] = useState<string[]>([]);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [subscription, setSubscription] = useState<(() => void) | null>(null);
