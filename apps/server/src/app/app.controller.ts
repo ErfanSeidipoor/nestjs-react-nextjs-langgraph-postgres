@@ -1,4 +1,4 @@
-import { Controller, Get, MessageEvent, Query, Sse } from '@nestjs/common';
+import { Controller, Get, MessageEvent, Param, Query, Sse } from '@nestjs/common';
 import { AppService } from './app.service';
 import { map } from 'rxjs/operators';
 import { interval, Observable } from 'rxjs';
@@ -14,12 +14,20 @@ export class AppController {
     return this.appService.getData();
   }
 
-  @Sse('sse')
-  sse(@Query('userToken') userToken: string): Observable<MessageEvent> {
-    console.log({userToken});
+  @Sse('sse/:chatId')
+  sse(@Query('userToken') userToken: string, @Param("chatId") chatId: string): Observable<MessageEvent> {
+    console.log({userToken,chatId});
     
+    return new Observable((observer) => {
+      observer.next({ data: { hello: 'world 1' } });
+      observer.next({ data: { hello: 'world 2' } });
+      // observer.unsubscribe();
+      observer.complete();
+    })
     return interval(1000).pipe(
       map((_, index) => {
+        console.log({index});
+        
         return ({ data: { hello: 'world'+index } }) as MessageEvent}),
     );
   }

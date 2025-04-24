@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+
 interface MessageEventData {
   hello: string;
 }
@@ -10,9 +11,11 @@ interface MessageEventData {
 const SSEComponent: React.FC = () => {
   const [messages, setMessages] = useState<string[]>([]);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
-  const [subscription, setSubscription] = useState<(() => void) | null>(null);
+  const [unsubscribe, setUnsubscribe] = useState<(() => void) | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const startSubscription = () => {
+  const continueChat = (chatId: string) => {
     if (subscriptionActive) return; // Prevent multiple subscriptions
 
     const userToken = 'yourUserTokenHere'; // Replace with actual token
@@ -22,13 +25,14 @@ const SSEComponent: React.FC = () => {
       ...additionalParams,
     }).toString();
 
-    console.log({queryParams});
-    
-    const eventSource = new EventSource(`http://localhost:4000/sse?${queryParams}`);
+    console.log({ queryParams });
+
+    const eventSource = new EventSource(`http://localhost:4000/sse/${chatId}?${queryParams}`);
 
     const sseObservable = new Observable<MessageEvent<string>>((subscriber) => {
       eventSource.onopen = () => {
         console.log('SSE connection opened');
+        setLoading(true); // Start loading when the connection opens
       };
 
       eventSource.onmessage = (event) => {
@@ -38,12 +42,15 @@ const SSEComponent: React.FC = () => {
 
       eventSource.onerror = (error) => {
         console.error('SSE error:', error);
+        setError(JSON.stringify(error));
         subscriber.error(error);
+        setLoading(false); // Stop loading on error
       };
 
       return () => {
         eventSource.close();
         console.log('SSE connection closed');
+        setLoading(false); // Stop loading when the connection is closed
       };
     });
 
@@ -65,35 +72,37 @@ const SSEComponent: React.FC = () => {
         setMessages((prevMessages) => [...prevMessages, JSON.stringify(message)]);
       });
 
-    setSubscription(() => () => {
+    setUnsubscribe(() => () => {
       subscriptionCleanup.unsubscribe();
       setSubscriptionActive(false);
     });
     setSubscriptionActive(true);
   };
 
-  const stopSubscription = () => {
-    if (subscription) {
-      subscription();
-      setSubscription(null);
+  const stop = () => {
+    if (unsubscribe) {
+      unsubscribe();
+      setUnsubscribe(null);
     }
   };
 
   return (
     <div>
       <h1>Server-Sent Events</h1>
-      <button onClick={startSubscription} disabled={subscriptionActive}>
+      <button onClick={() => continueChat('chatId')} disabled={subscriptionActive}>
         Start Subscription
       </button>
       <br />
-      <button onClick={stopSubscription} disabled={!subscriptionActive}>
+      <button onClick={stop} disabled={!subscriptionActive}>
         Stop Subscription
       </button>
+      {loading && <div>Loading...</div>}
       <ul>
         {messages.map((message, index) => (
           <li key={index}>{message}</li>
         ))}
       </ul>
+      {error && <div style={{ color: 'red' }}>Error: {error}</div>}
     </div>
   );
 };
