@@ -1,0 +1,19 @@
+POST http://localhost:4000/chat HTTP/1.1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiNWNlYzU1YTEtMjkzMy00ZmIzLWI5Y2MtY2Q2MzI4MTM5ZWU5IiwiaWF0IjoxNzQ1NzY5NDgxLCJleHAiOjE3NDU3NzMwODF9.rnnNcPauOQZ1nYLc9v-eVRl3rJk3xwD8UpLiuTKHIhs
+content-type: application/json
+
+{
+    "title": "sample"
+}
+
+###
+GET  http://localhost:4000/chat HTTP/1.1
+content-type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiNWNlYzU1YTEtMjkzMy00ZmIzLWI5Y2MtY2Q2MzI4MTM5ZWU5IiwiaWF0IjoxNzQ1NzY5NDgxLCJleHAiOjE3NDU3NzMwODF9.rnnNcPauOQZ1nYLc9v-eVRl3rJk3xwD8UpLiuTKHIhs
+content-type: application/json
+
+###
+GET  http://localhost:4000/chat/b5967ec2-7ec9-4b4f-867d-2c66e8a7daf9 HTTP/1.1
+content-type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiNWNlYzU1YTEtMjkzMy00ZmIzLWI5Y2MtY2Q2MzI4MTM5ZWU5IiwiaWF0IjoxNzQ1NzY5NDgxLCJleHAiOjE3NDU3NzMwODF9.rnnNcPauOQZ1nYLc9v-eVRl3rJk3xwD8UpLiuTKHIhs
+content-type: application/json

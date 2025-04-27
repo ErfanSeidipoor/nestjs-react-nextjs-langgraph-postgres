@@ -1,3 +1,4 @@
+import Navbar from '@/components/navbar';
 import './global.css';
 
 export const metadata = {

@@ -1,110 +1,95 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Navbar from '@/components/navbar';
 
-interface MessageEventData {
-  hello: string;
-}
-
-const SSEComponent: React.FC = () => {
-  const [messages, setMessages] = useState<string[]>([]);
-  const [subscriptionActive, setSubscriptionActive] = useState(false);
-  const [unsubscribe, setUnsubscribe] = useState<(() => void) | null>(null);
+function Auth(): React.JSX.Element {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter();
 
-  const continueChat = (chatId: string) => {
-    if (subscriptionActive) return; // Prevent multiple subscriptions
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    console.log({storedUsername});
+    
+    if (storedUsername) {
+      router.push('/chat');
+    }
+  }, [router]);
 
-    const userToken = 'yourUserTokenHere'; // Replace with actual token
-    const additionalParams = { param1: 'value1', param2: 'value2' }; // Replace with actual parameters
-    const queryParams = new URLSearchParams({
-      userToken,
-      ...additionalParams,
-    }).toString();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setMessage(null);
 
-    console.log({ queryParams });
+    if (!username || !password) {
+      setError('Username and password are required.');
+      return;
+    }
 
-    const eventSource = new EventSource(`http://localhost:4000/sse/${chatId}?${queryParams}`);
+    const url = isSignUp
+      ? 'http://localhost:4000/user/signup'
+      : 'http://localhost:4000/user/signin';
 
-    const sseObservable = new Observable<MessageEvent<string>>((subscriber) => {
-      eventSource.onopen = () => {
-        console.log('SSE connection opened');
-        setLoading(true); // Start loading when the connection opens
-      };
-
-      eventSource.onmessage = (event) => {
-        console.log('New message:', event);
-        subscriber.next(event);
-      };
-
-      eventSource.onerror = (error) => {
-        console.error('SSE error:', error);
-        setError(JSON.stringify(error));
-        subscriber.error(error);
-        setLoading(false); // Stop loading on error
-      };
-
-      return () => {
-        eventSource.close();
-        console.log('SSE connection closed');
-        setLoading(false); // Stop loading when the connection is closed
-      };
-    });
-
-    const subscriptionCleanup = sseObservable
-      .pipe(
-        map((event) => {
-          try {
-            const parsedData = JSON.parse(event.data) as MessageEventData;
-            console.log('Parsing SSE data:', parsedData);
-            return parsedData;
-          } catch (error) {
-            console.error('Error parsing SSE data:', error, event.data);
-            return `Error: Could not parse message: ${event.data}`;
-          }
-        })
-      )
-      .subscribe((message) => {
-        console.log('subscribe > ', message as MessageEventData);
-        setMessages((prevMessages) => [...prevMessages, JSON.stringify(message)]);
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
       });
 
-    setUnsubscribe(() => () => {
-      subscriptionCleanup.unsubscribe();
-      setSubscriptionActive(false);
-    });
-    setSubscriptionActive(true);
-  };
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || 'Something went wrong.');
+        return;
+      }
 
-  const stop = () => {
-    if (unsubscribe) {
-      unsubscribe();
-      setUnsubscribe(null);
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', data.username);
+      setMessage(isSignUp ? 'Sign-up successful!' : 'Sign-in successful!');
+      router.push('/chat');
+    } catch (err) {
+      setError('An error occurred. Please try again.');
     }
   };
 
   return (
     <div>
-      <h1>Server-Sent Events</h1>
-      <button onClick={() => continueChat('chatId')} disabled={subscriptionActive}>
-        Start Subscription
+      <Navbar />
+      <h1>{isSignUp ? 'Sign Up' : 'Sign In'}</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Username:</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Password:</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {message && <p style={{ color: 'green' }}>{message}</p>}
+        <button type="submit">{isSignUp ? 'Sign Up' : 'Sign In'}</button>
+      </form>
+      <button onClick={() => setIsSignUp(!isSignUp)}>
+        Switch to {isSignUp ? 'Sign In' : 'Sign Up'}
       </button>
-      <br />
-      <button onClick={stop} disabled={!subscriptionActive}>
-        Stop Subscription
-      </button>
-      {loading && <div>Loading...</div>}
-      <ul>
-        {messages.map((message, index) => (
-          <li key={index}>{message}</li>
-        ))}
-      </ul>
-      {error && <div style={{ color: 'red' }}>Error: {error}</div>}
     </div>
   );
-};
+}
 
-export default SSEComponent;
+export default Auth;

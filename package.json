@@ -26,6 +26,7 @@
     "@swc/helpers": "~0.5.11",
     "@swc/jest": "~0.2.36",
     "@types/jest": "^29.5.12",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "~18.16.9",
     "@types/react": "19.0.0",
     "@types/react-dom": "19.0.0",
@@ -63,10 +64,12 @@
     "@nestjs/platform-express": "^10.0.2",
     "@nestjs/serve-static": "^5.0.3",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "next": "~15.2.4",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "uuid": "^11.1.0"
   }
 }
