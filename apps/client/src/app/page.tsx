@@ -14,10 +14,10 @@ function Auth(): React.JSX.Element {
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
-    console.log({storedUsername});
-    
+    console.log({ storedUsername });
+
     if (storedUsername) {
-      router.push('/chat');
+      router.push('/thread');
     }
   }, [router]);
 
@@ -54,7 +54,7 @@ function Auth(): React.JSX.Element {
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', data.username);
       setMessage(isSignUp ? 'Sign-up successful!' : 'Sign-in successful!');
-      router.push('/chat');
+      router.push('/thread');
     } catch (err) {
       setError('An error occurred. Please try again.');
     }
