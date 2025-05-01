@@ -8,6 +8,9 @@
     },
     {
       "path": "./apps/server"
+    },
+    {
+      "path": "./libs/models"
     }
   ]
 }

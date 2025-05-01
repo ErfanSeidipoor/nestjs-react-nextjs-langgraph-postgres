@@ -38,7 +38,9 @@ function Thread(): React.JSX.Element {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch threads');
+          const errorText = await response.text();
+
+          throw new Error(`Failed to fetch threads: ${errorText}`);
         }
 
         const data = await response.json();

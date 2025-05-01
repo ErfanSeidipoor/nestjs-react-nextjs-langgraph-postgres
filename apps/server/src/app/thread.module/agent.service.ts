@@ -61,8 +61,6 @@ export class AgentService {
       this.tools.map((tool) => [tool.name, tool])
     );
 
-    console.log({ toolsByName });
-
     if (lastMessage?.tool_calls?.length) {
       for (const toolCall of lastMessage.tool_calls) {
         const tool = toolsByName[toolCall.name];

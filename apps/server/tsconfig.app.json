@@ -3,13 +3,18 @@
   "compilerOptions": {
     "outDir": "dist",
     "types": ["node"],
-    "rootDir": "src",
+    "rootDir": "../../",
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "target": "es2021"
+    "target": "es2021",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@models": ["../../libs/models/src"],
+      "@models/*": ["../../libs/models/src/*"]
+    }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["./src/**/*.ts", "../../libs/models/**/*.ts"],
   "exclude": [
     "out-tsc",
     "dist",
@@ -19,5 +24,10 @@
     "eslint.config.js",
     "eslint.config.cjs",
     "eslint.config.mjs"
+  ],
+  "references": [
+    {
+      "path": "../../libs/models/tsconfig.lib.json"
+    }
   ]
 }

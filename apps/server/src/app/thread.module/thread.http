@@ -1,7 +1,7 @@
 
 POST http://localhost:4000/thread HTTP/1.1
 content-type: application/json
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiYzVlMjkwYTUtN2ZhYy00YzYwLTkxODctYWU5NWM5YmE3YWVjIiwiaWF0IjoxNzQ1OTExNTg2LCJleHAiOjE3NDU5NDc1ODZ9.hDjaw3Fuk2WtU7mmFSftsCLQbXnqazsLZHCahS_XKUs
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiYzVlMjkwYTUtN2ZhYy00YzYwLTkxODctYWU5NWM5YmE3YWVjIiwiaWF0IjoxNzQ2MDg3NzE2LCJleHAiOjE3NDYxMjM3MTZ9.GstCUtuw_USPZ9Zpoih_04By1JBBUy0amHChT5I-YCg
 
 {
     "title": "9",
@@ -9,9 +9,9 @@ Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIs
 }
 
 ###
-POST http://localhost:4000/thread/8bfa1997-77d3-497b-8d42-a74f3aac64b1/continue HTTP/1.1
+POST http://localhost:4000/thread/d5bd905d-eb36-43be-b426-f3812a75d8a3/continue HTTP/1.1
 content-type: application/json
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiYzVlMjkwYTUtN2ZhYy00YzYwLTkxODctYWU5NWM5YmE3YWVjIiwiaWF0IjoxNzQ1OTExNTg2LCJleHAiOjE3NDU5NDc1ODZ9.hDjaw3Fuk2WtU7mmFSftsCLQbXnqazsLZHCahS_XKUs
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiYzVlMjkwYTUtN2ZhYy00YzYwLTkxODctYWU5NWM5YmE3YWVjIiwiaWF0IjoxNzQ2MDg3NzE2LCJleHAiOjE3NDYxMjM3MTZ9.GstCUtuw_USPZ9Zpoih_04By1JBBUy0amHChT5I-YCg
 
 {
     "prompt": "what is your name?"
@@ -20,13 +20,13 @@ Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIs
 ###
 GET  http://localhost:4000/thread HTTP/1.1
 content-type: application/json
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiYzVlMjkwYTUtN2ZhYy00YzYwLTkxODctYWU5NWM5YmE3YWVjIiwiaWF0IjoxNzQ1OTExNTg2LCJleHAiOjE3NDU5NDc1ODZ9.hDjaw3Fuk2WtU7mmFSftsCLQbXnqazsLZHCahS_XKUs
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiYzVlMjkwYTUtN2ZhYy00YzYwLTkxODctYWU5NWM5YmE3YWVjIiwiaWF0IjoxNzQ2MDg3NzE2LCJleHAiOjE3NDYxMjM3MTZ9.GstCUtuw_USPZ9Zpoih_04By1JBBUy0amHChT5I-YCg
 
 
 ###
 GET  http://localhost:4000/thread/05e5af79-790b-4dff-94a6-9cfc73fe23a0 HTTP/1.1
 content-type: application/json
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiYzVlMjkwYTUtN2ZhYy00YzYwLTkxODctYWU5NWM5YmE3YWVjIiwiaWF0IjoxNzQ1ODQ2MDUyLCJleHAiOjE3NDU4ODIwNTJ9.aMvfZhUMdPWOSZ8AnJGT0Qi4x_HVpECJgpFvY5gSuD0
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiYzVlMjkwYTUtN2ZhYy00YzYwLTkxODctYWU5NWM5YmE3YWVjIiwiaWF0IjoxNzQ2MDg3NzE2LCJleHAiOjE3NDYxMjM3MTZ9.GstCUtuw_USPZ9Zpoih_04By1JBBUy0amHChT5I-YCg
 
 
 ###

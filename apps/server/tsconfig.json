@@ -1,8 +1,18 @@
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "@models": ["../../libs/models/src"],
+      "@models/*": ["../../libs/models/src/*"]
+    }
+  },
   "files": [],
-  "include": [],
+  "include": ["src/**/*.ts", "../../libs/models/**/*.ts"],
   "references": [
+    {
+      "path": "../../libs/models"
+    },
     {
       "path": "./tsconfig.app.json"
     },

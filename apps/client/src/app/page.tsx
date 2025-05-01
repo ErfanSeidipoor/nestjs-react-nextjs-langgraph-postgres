@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/navbar';
+// import { models } from '../../../../libs/models';
 
 function Auth(): React.JSX.Element {
   const [isSignUp, setIsSignUp] = useState(false);

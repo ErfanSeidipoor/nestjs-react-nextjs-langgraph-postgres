@@ -1,92 +1,34 @@
 'use client';
-
-import {
-  AIMessage,
-  BaseMessage,
-  HumanMessage,
-  ToolMessage,
-  AIMessageChunk,
-} from '@langchain/core/messages';
 import { useRouter } from 'next/navigation';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import React, { useEffect, useState } from 'react';
+import {
+  ClientStatus,
+  HumanMessageType,
+  ToolMessageType,
+  AIMessageChunkType,
+  AIMessageType,
+  MessageModel,
+} from '@models';
 
 interface ChatbotProps {
   threadId: string;
-}
-
-interface Plan {
-  lc: number;
-  type: string;
-  id: string[];
-  kwargs: Record<string, any>;
-}
-
-interface MessageEventData {
-  hello: string;
-}
-
-function convertPlansToMessages(plans: Plan[]): BaseMessage[] {
-  return plans.map((plan) => {
-    const messageType = plan.id[plan.id.length - 1];
-    const kwargs = plan.kwargs || {};
-
-    switch (messageType) {
-      case 'HumanMessage':
-        return new HumanMessage({
-          content: kwargs.content ?? '',
-          additional_kwargs: kwargs.additional_kwargs ?? {},
-          response_metadata: kwargs.response_metadata ?? {},
-        });
-
-      case 'AIMessage':
-        return new AIMessage({
-          content: kwargs.content ?? '',
-          additional_kwargs: kwargs.additional_kwargs ?? {},
-          response_metadata: kwargs.response_metadata ?? {},
-          id: kwargs.id,
-          tool_calls: kwargs.tool_calls,
-          invalid_tool_calls: kwargs.invalid_tool_calls,
-          usage_metadata: kwargs.usage_metadata,
-        });
-
-      case 'ToolMessage':
-        return new ToolMessage({
-          content: kwargs.content ?? '',
-          tool_call_id: kwargs.tool_call_id,
-          additional_kwargs: kwargs.additional_kwargs ?? {},
-          response_metadata: kwargs.response_metadata ?? {},
-        });
-      case 'AIMessageChunk':
-        return new AIMessageChunk({
-          content: kwargs.content ?? '',
-          additional_kwargs: kwargs.additional_kwargs ?? {},
-          response_metadata: kwargs.response_metadata ?? {},
-          id: kwargs.id,
-          tool_calls: kwargs.tool_calls,
-          invalid_tool_calls: kwargs.invalid_tool_calls,
-          usage_metadata: kwargs.usage_metadata,
-        });
-
-      default:
-        throw new Error(`Unknown message type: ${messageType}`);
-    }
-  });
 }
 
 const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
   const router = useRouter();
 
   const [messages, setMessages] = useState<
-    (AIMessage | HumanMessage | ToolMessage | AIMessageChunk)[]
+    (HumanMessageType | ToolMessageType | AIMessageChunkType | AIMessageType)[]
   >([]);
+
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'api' | 'socket'>('api');
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [unsubscribe, setUnsubscribe] = useState<(() => void) | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [messageStream, setMessageStream] = useState('');
 
   const continueChatSocket = () => {
     if (subscriptionActive) return;
@@ -99,8 +41,6 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
       prompt: newMessage,
     }).toString();
 
-    console.log({ queryParams });
-
     const eventSource = new EventSource(
       `http://localhost:4000/thread/${threadId}/continue?${queryParams}`
     );
@@ -108,22 +48,30 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
     const sseObservable = new Observable<MessageEvent<string>>((subscriber) => {
       eventSource.onopen = () => {
         console.log('SSE connection opened');
-        setLoading(true); // Start loading when the connection opens
+        setLoading(true);
       };
 
       eventSource.onmessage = (event) => {
-        console.log('New message:', event);
+        const parsedData = JSON.parse(event.data) as ClientStatus;
+        console.log('New message:', parsedData.status, { event, parsedData });
+        if (parsedData.status === 'end') {
+          eventSource.close();
+          setSubscriptionActive(false);
+          setLoading(false);
+        }
         subscriber.next(event);
       };
 
       eventSource.onerror = (error) => {
-        // console.error('SSE error:', error);
-        console.log({ error });
-        setError(JSON.stringify(error));
-        // subscriber.error(error);
-        eventSource.close();
-        console.log('SSE connection closed');
-        setLoading(false); // Stop loading on error
+        console.log('SSE error:setSubscriptionActive:', subscriptionActive);
+        if (subscriptionActive) {
+          console.log({ error });
+          setError(JSON.stringify(error));
+          eventSource.close();
+          console.log('eventSource.onerror SSE connection closed');
+          setLoading(false);
+          setSubscriptionActive(false);
+        }
       };
 
       return () => {
@@ -134,24 +82,26 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
     });
 
     const subscriptionCleanup = sseObservable
-      .pipe(
-        map((event) => {
-          try {
-            const parsedData = JSON.parse(event.data) as MessageEventData;
-            console.log('Parsing SSE data:', parsedData);
-            return parsedData;
-          } catch (error) {
-            // console.error('Error parsing SSE data:', error, event.data);
-            return `Error: Could not parse message: ${event.data}`;
+      .pipe()
+      .subscribe(({ data }): void => {
+        try {
+          const parsedData = JSON.parse(data) as ClientStatus;
+          if (parsedData.status === 'new_message') {
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              ...parsedData.messages,
+            ]);
+            setMessageStream('');
+          } else if (parsedData.status === 'end') {
+            stopChatSocket();
+            setMessageStream('');
+          } else if (parsedData.status === 'stream_content') {
+            const newMessageChunk = new MessageModel(parsedData.chunk);
+            setMessageStream((prev) => prev + newMessageChunk.getContent());
           }
-        })
-      )
-      .subscribe((message) => {
-        console.log('subscribe > ', message as MessageEventData);
-        // setMessages((prevMessages) => [
-        //   ...prevMessages,
-        //   JSON.stringify(message),
-        // ]);
+        } catch (error) {
+          console.error('Error parsing message:', error);
+        }
       });
 
     setUnsubscribe(() => () => {
@@ -187,8 +137,8 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
       );
 
       if (response.ok) {
-        const data = (await response.json()) as Plan[];
-        setMessages(convertPlansToMessages(data));
+        const data = (await response.json()) as typeof messages;
+        setMessages(data);
         setNewMessage('');
       } else {
         console.error('Failed to send message');
@@ -224,8 +174,8 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
         );
 
         if (response.ok) {
-          const data = (await response.json()) as Plan[];
-          setMessages(convertPlansToMessages(data));
+          const data = (await response.json()) as typeof messages;
+          setMessages(data);
         } else {
           console.error('Failed to fetch messages');
         }
@@ -274,37 +224,46 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
           </label>
         </div>
         <div>
-          {messages.map((message, index) => {
-            if (message.getType() === 'tool') {
-              return (
-                <div key={index}>
-                  <strong>Tool:</strong>{' '}
-                  {(message as ToolMessage).content as string}
-                </div>
-              );
-            } else if (message.getType() === 'ai') {
-              return (
-                <div key={index}>
-                  <strong>AI:</strong> {String(message.content)}
-                </div>
-              );
-            } else if (message.getType() === 'human') {
-              return (
-                <div key={index}>
-                  <strong>You:</strong> {String(message.content)}
-                </div>
-              );
-            } else {
-              return (
-                <div key={index}>
-                  <strong>Unknown message type:</strong>{' '}
-                  {JSON.stringify(message)}
-                </div>
-              );
-            }
-          })}
+          {messages
+            .map((message) => new MessageModel(message))
+            .map((message, index) => {
+              if (message.isToolMessage()) {
+                return (
+                  <div key={index}>
+                    <strong>Tool:</strong> {message.getContent()}
+                  </div>
+                );
+              } else if (message.isAIMessage() || message.isAIMessageChunk()) {
+                return (
+                  <div key={index}>
+                    <strong>AI:</strong> {message.getContent()}
+                  </div>
+                );
+              } else if (message.isHumanMessage()) {
+                return (
+                  <div key={index}>
+                    <strong>You:</strong> {message.getContent()}
+                  </div>
+                );
+              } else {
+                return (
+                  <div key={index}>
+                    <strong>Unknown message type:</strong>{' '}
+                    {JSON.stringify(message)}
+                  </div>
+                );
+              }
+            })}
+        </div>
+        <div>
+          {messageStream && (
+            <div>
+              <strong>You:</strong> {messageStream}
+            </div>
+          )}
         </div>
         {loading && 'Loading...'}
+        {error && <div style={{ color: 'red' }}>Error: {error}</div>}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -320,6 +279,13 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
           />
           <button type="submit" disabled={loading || !newMessage}>
             {loading ? 'Loading...' : 'Send'}
+          </button>
+          <button
+            type="button"
+            onClick={stopChatSocket}
+            disabled={!subscriptionActive}
+          >
+            Stop
           </button>
         </form>
       </div>

@@ -3,6 +3,7 @@
   "editor.formatOnSave": true,
   "cSpell.words": [
     "checkpoiner",
+    "kwargs",
     "langgraph",
     "OPENAI",
     "timestamptz",

@@ -1,12 +1,12 @@
 import { BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { MessageEventManager, MessageEventType } from '@models';
 import { BadRequestException, Injectable, MessageEvent } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Observable } from 'rxjs';
 import { Repository } from 'typeorm';
 import { Thread } from '../postgres-db/entities';
 import { AgentService } from './agent.service';
 import { CheckpointerService } from './checkpoiner.service';
-import { Observable } from 'rxjs';
-import * as fs from 'fs/promises';
 
 @Injectable()
 export class ThreadService {
@@ -103,29 +103,28 @@ export class ThreadService {
         }
       );
 
+    const messageEventManager = new MessageEventManager();
     const RESULT: object[] = [];
     return new Observable<MessageEvent>((observer) => {
       (async () => {
         try {
-          for await (const {
-            event,
-            data,
-            metadata,
-            name,
-            run_id,
-            tags,
-          } of eventStream) {
-            RESULT.push({ event, data, metadata, name, run_id, tags });
-            observer.next({
-              data: { event, data },
-            } as MessageEvent);
+          for await (const messageEvent of eventStream) {
+            const clientStatus = messageEventManager.addEvent(
+              messageEvent as unknown as MessageEventType
+            );
+
+            RESULT.push({ clientStatus, messageEvent });
+
+            if (clientStatus) {
+              observer.next({
+                data: clientStatus,
+              });
+            }
           }
 
-          fs.writeFile(
-            './RESULT.json',
-            JSON.stringify({ RESULT }, null, 2),
-            'utf8'
-          );
+          observer.next({
+            data: messageEventManager.end(),
+          });
 
           observer.complete();
         } catch (error) {
@@ -145,16 +144,6 @@ export class ThreadService {
     const config = {
       configurable: { thread_id: threadId },
     };
-    // const checkpointer = await this.checkpointerService.checkpointer.get({
-    //   configurable: { thread_id: threadId },
-    // });
-
-    // if (checkpointer) {
-    //   const messages = checkpointer.channel_values;
-    //   if (messages) {
-    //     return messages;
-    //   }
-    // }
 
     const state = await this.agentService
       .app(this.checkpointerService.checkpointer)

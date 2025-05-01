@@ -27,7 +27,9 @@ const SSEComponent: React.FC = () => {
 
     console.log({ queryParams });
 
-    const eventSource = new EventSource(`http://localhost:4000/sse/${chatId}?${queryParams}`);
+    const eventSource = new EventSource(
+      `http://localhost:4000/sse/${chatId}?${queryParams}`
+    );
 
     const sseObservable = new Observable<MessageEvent<string>>((subscriber) => {
       eventSource.onopen = () => {
@@ -35,24 +37,20 @@ const SSEComponent: React.FC = () => {
         setLoading(true); // Start loading when the connection opens
       };
 
-
       eventSource.onmessage = (event) => {
         console.log('New message:', event);
         subscriber.next(event);
       };
 
-
       eventSource.onerror = (error) => {
         // console.error('SSE error:', error);
-        console.log({error});
+        console.log({ error });
         setError(JSON.stringify(error));
         // subscriber.error(error);
         eventSource.close();
         console.log('SSE connection closed');
         setLoading(false); // Stop loading on error
       };
-
-
 
       return () => {
         eventSource.close();
@@ -76,7 +74,10 @@ const SSEComponent: React.FC = () => {
       )
       .subscribe((message) => {
         console.log('subscribe > ', message as MessageEventData);
-        setMessages((prevMessages) => [...prevMessages, JSON.stringify(message)]);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          JSON.stringify(message),
+        ]);
       });
 
     setUnsubscribe(() => () => {
@@ -96,7 +97,10 @@ const SSEComponent: React.FC = () => {
   return (
     <div>
       <h1>Server-Sent Events</h1>
-      <button onClick={() => continueChat('chatId')} disabled={subscriptionActive}>
+      <button
+        onClick={() => continueChat('chatId')}
+        disabled={subscriptionActive}
+      >
         Start Subscription
       </button>
       <br />
