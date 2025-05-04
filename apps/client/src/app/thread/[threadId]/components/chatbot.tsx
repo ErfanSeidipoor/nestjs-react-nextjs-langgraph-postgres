@@ -1,293 +1,249 @@
 'use client';
-import { useRouter } from 'next/navigation';
-import { Observable } from 'rxjs';
-import React, { useEffect, useState } from 'react';
+
 import {
-  ClientStatus,
-  HumanMessageType,
-  ToolMessageType,
-  AIMessageChunkType,
-  AIMessageType,
-  MessageModel,
-} from '@models';
+  ArrowUp,
+  Cpu,
+  Loader2,
+  Radio,
+  StopCircle,
+  User,
+  Wrench,
+} from 'lucide-react';
+import type React from 'react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+import { MessageModel } from '@models';
+import { useData } from './index.hook';
 
 interface ChatbotProps {
   threadId: string;
 }
 
 const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
-  const router = useRouter();
+  const data = useData(threadId);
 
-  const [messages, setMessages] = useState<
-    (HumanMessageType | ToolMessageType | AIMessageChunkType | AIMessageType)[]
-  >([]);
-
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'api' | 'socket'>('api');
-  const [subscriptionActive, setSubscriptionActive] = useState(false);
-  const [unsubscribe, setUnsubscribe] = useState<(() => void) | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [messageStream, setMessageStream] = useState('');
-
-  const continueChatSocket = () => {
-    if (subscriptionActive) return;
-
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    const queryParams = new URLSearchParams({
-      token,
-      prompt: newMessage,
-    }).toString();
-
-    const eventSource = new EventSource(
-      `http://localhost:4000/thread/${threadId}/continue?${queryParams}`
-    );
-
-    const sseObservable = new Observable<MessageEvent<string>>((subscriber) => {
-      eventSource.onopen = () => {
-        console.log('SSE connection opened');
-        setLoading(true);
-      };
-
-      eventSource.onmessage = (event) => {
-        const parsedData = JSON.parse(event.data) as ClientStatus;
-        console.log('New message:', parsedData.status, { event, parsedData });
-        if (parsedData.status === 'end') {
-          eventSource.close();
-          setSubscriptionActive(false);
-          setLoading(false);
-        }
-        subscriber.next(event);
-      };
-
-      eventSource.onerror = (error) => {
-        console.log('SSE error:setSubscriptionActive:', subscriptionActive);
-        if (subscriptionActive) {
-          console.log({ error });
-          setError(JSON.stringify(error));
-          eventSource.close();
-          console.log('eventSource.onerror SSE connection closed');
-          setLoading(false);
-          setSubscriptionActive(false);
-        }
-      };
-
-      return () => {
-        eventSource.close();
-        console.log('SSE connection closed');
-        setLoading(false); // Stop loading when the connection is closed
-      };
-    });
-
-    const subscriptionCleanup = sseObservable
-      .pipe()
-      .subscribe(({ data }): void => {
-        try {
-          const parsedData = JSON.parse(data) as ClientStatus;
-          if (parsedData.status === 'new_message') {
-            setMessages((prevMessages) => [
-              ...prevMessages,
-              ...parsedData.messages,
-            ]);
-            setMessageStream('');
-          } else if (parsedData.status === 'end') {
-            stopChatSocket();
-            setMessageStream('');
-          } else if (parsedData.status === 'stream_content') {
-            const newMessageChunk = new MessageModel(parsedData.chunk);
-            setMessageStream((prev) => prev + newMessageChunk.getContent());
-          }
-        } catch (error) {
-          console.error('Error parsing message:', error);
-        }
-      });
-
-    setUnsubscribe(() => () => {
-      subscriptionCleanup.unsubscribe();
-      setSubscriptionActive(false);
-    });
-    setSubscriptionActive(true);
-  };
-
-  const stopChatSocket = () => {
-    if (unsubscribe) {
-      unsubscribe();
-      setUnsubscribe(null);
-    }
-  };
-
-  const continueChatApi = async () => {
-    const token = localStorage.getItem('token');
-    if (!token || !threadId || !newMessage.trim()) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `http://localhost:4000/thread/${threadId}/continue`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: token,
-          },
-          body: JSON.stringify({ prompt: newMessage }),
-        }
-      );
-
-      if (response.ok) {
-        const data = (await response.json()) as typeof messages;
-        setMessages(data);
-        setNewMessage('');
-      } else {
-        console.error('Failed to send message');
-      }
-    } catch (error) {
-      console.error('Error sending or continuing thread:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const username = localStorage.getItem('username');
-    if (!username) {
-      router.push('/');
-      return;
-    }
-
-    const token = localStorage.getItem('token');
-    if (!token || !threadId) return;
-
-    const fetchMessages = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(
-          `http://localhost:4000/thread/${threadId}/message`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: token,
-            },
-          }
-        );
-
-        if (response.ok) {
-          const data = (await response.json()) as typeof messages;
-          setMessages(data);
-        } else {
-          console.error('Failed to fetch messages');
-        }
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMessages();
-  }, [router, threadId]);
-
-  const handleSendMessage = async () => {
-    if (mode === 'api') {
-      continueChatApi();
-    } else if (mode === 'socket') {
-      continueChatSocket();
-    }
-  };
-
-  return (
-    <div>
-      <div>
-        <h1>Thread Details</h1>
-        <div>
-          <label>
-            <input
-              type="radio"
-              name="mode"
+  const renderTabsMode = () => {
+    return (
+      <Tabs
+        value={data.mode}
+        onValueChange={(value) => data.setMode(value as 'api' | 'socket')}
+        className="mb-4 fixed top-2.5 left-16"
+      >
+        <div className="flex items-center justify-between">
+          <TabsList className="bg-white rounded-xl shadow-sm shadow-gray-400">
+            <TabsTrigger
               value="api"
-              checked={mode === 'api'}
-              onChange={() => setMode('api')}
-            />
-            API Mode
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="mode"
+              className="flex items-center gap-1 !border-none cursor-pointer rounded-l-xl "
+            >
+              <Cpu className="h-4 w-4" />
+              API Mode
+            </TabsTrigger>
+            <TabsTrigger
               value="socket"
-              checked={mode === 'socket'}
-              onChange={() => setMode('socket')}
-            />
-            Socket Mode
-          </label>
+              className="flex items-center gap-1 !border-none cursor-pointer rounded-r-xl"
+            >
+              <Radio className="h-4 w-4" />
+              Streaming Mode
+            </TabsTrigger>
+          </TabsList>
+          {/* <Badge
+            className="text-black/80"
+            variant={subscriptionActive ? 'default' : 'outline'}
+          >
+            {subscriptionActive ? 'Streaming Active' : 'Not Streaming'}
+          </Badge> */}
         </div>
-        <div>
-          {messages
+      </Tabs>
+    );
+  };
+
+  const renderMessages = () => {
+    return (
+      <div className="flex-1 overflow-y-auto border bg-black/40 p-4 custom-scrollbar rounded-2xl">
+        <div className="space-y-6">
+          {data.messages
             .map((message) => new MessageModel(message))
             .map((message, index) => {
               if (message.isToolMessage()) {
                 return (
-                  <div key={index}>
-                    <strong>Tool:</strong> {message.getContent()}
+                  <div key={index} className="flex items-start gap-3">
+                    <Avatar className="mt-0.5 h-8 w-8 bg-amber-100 text-amber-600">
+                      <AvatarFallback className="bg-amber-100">
+                        <Wrench className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <Card className="flex-1 overflow-hidden bg-amber-50">
+                      <CardContent className="p-3 text-sm">
+                        <div className="font-medium text-amber-800">Tool</div>
+                        <div className="mt-1 whitespace-pre-wrap text-black/80">
+                          {message.getContent()}
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 );
               } else if (message.isAIMessage() || message.isAIMessageChunk()) {
+                const aiMessageModel = message.getAIMessageModel();
                 return (
-                  <div key={index}>
-                    <strong>AI:</strong> {message.getContent()}
+                  <div key={index} className="flex items-start gap-3">
+                    <Avatar className="mt-0.5 h-8 w-8 bg-purple-100 text-purple-600">
+                      <AvatarFallback className="bg-purple-100">
+                        AI
+                      </AvatarFallback>
+                      <AvatarImage src="/ai-assistant-icon.png" />
+                    </Avatar>
+                    <Card className="flex-1 overflow-hidden">
+                      <CardContent className="p-3 text-sm bg-zinc-700">
+                        <div className="font-medium">Assistant</div>
+                        <div className="mt-1 whitespace-pre-wrap">
+                          {message.getContent() ||
+                            aiMessageModel?.getToolCallsDisplay()}
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 );
               } else if (message.isHumanMessage()) {
                 return (
-                  <div key={index}>
-                    <strong>You:</strong> {message.getContent()}
+                  <div
+                    key={index}
+                    className="flex flex-row-reverse items-start gap-3 ml-[20%]"
+                  >
+                    <Avatar className="mt-0.5 h-8 w-8 bg-blue-100 text-blue-600">
+                      <AvatarFallback className="bg-blue-100">
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <Card className="flex-1 overflow-hidden bg-blue-50">
+                      <CardContent className="p-3 text-sm">
+                        <div className="font-medium text-blue-800">You</div>
+                        <div className="mt-1 whitespace-pre-wrap text-black/80">
+                          {message.getContent()}
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 );
               } else {
                 return (
-                  <div key={index}>
-                    <strong>Unknown message type:</strong>{' '}
-                    {JSON.stringify(message)}
+                  <div key={index} className="flex items-start gap-3">
+                    <Avatar className="mt-0.5 h-8 w-8 bg-gray-100">
+                      <AvatarFallback className="bg-gray-100">?</AvatarFallback>
+                    </Avatar>
+                    <Card className="flex-1 overflow-hidden bg-gray-50">
+                      <CardContent className="p-3 text-sm">
+                        <div className="font-medium">Unknown Message Type</div>
+                        <div className="mt-1 overflow-x-auto">
+                          <pre className="text-xs">
+                            {JSON.stringify(message, null, 2)}
+                          </pre>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 );
               }
             })}
-        </div>
-        <div>
-          {messageStream && (
-            <div>
-              <strong>You:</strong> {messageStream}
+
+          {data.messageStream && (
+            <div className="flex items-start gap-3">
+              <Avatar className="mt-0.5 h-8 w-8 bg-purple-100 text-purple-600">
+                <AvatarFallback className="bg-purple-100">AI</AvatarFallback>
+                <AvatarImage src="/ai-assistant-icon.png" />
+              </Avatar>
+              <Card className="flex-1 overflow-hidden">
+                <CardContent className="p-3 text-sm">
+                  <div className="font-medium">Assistant</div>
+                  <div className="mt-1 whitespace-pre-wrap">
+                    {data.messageStream}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
+
+          {data.loading && !data.messageStream && (
+            <div className="flex items-start gap-3">
+              <Avatar className="mt-0.5 h-8 w-8 bg-purple-100 text-purple-600">
+                <AvatarFallback className="bg-purple-100">AI</AvatarFallback>
+                <AvatarImage src="/ai-assistant-icon.png" />
+              </Avatar>
+              <Card className="flex-1 overflow-hidden">
+                <CardContent className="flex items-center p-3 text-sm">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <span>Thinking...</span>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          <div ref={data.messagesEndRef} />
         </div>
-        {loading && 'Loading...'}
-        {error && <div style={{ color: 'red' }}>Error: {error}</div>}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSendMessage();
-          }}
-        >
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+      </div>
+    );
+  };
+
+  const renderForm = () => {
+    return (
+      <div className="mt-4">
+        <form onSubmit={data.handleSendMessage} className="relative">
+          <Input
+            value={data.newMessage}
+            onChange={(e) => data.setNewMessage(e.target.value)}
             placeholder="Type your message..."
-            disabled={loading} // Disable input when loading
+            disabled={data.loading}
+            className="text-white/80 pr-24 py-6 rounded-2xl border border-solid border-white/40 bg-black/40"
+            ref={data.inputRef}
           />
-          <button type="submit" disabled={loading || !newMessage}>
-            {loading ? 'Loading...' : 'Send'}
-          </button>
-          <button
-            type="button"
-            onClick={stopChatSocket}
-            disabled={!subscriptionActive}
-          >
-            Stop
-          </button>
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex gap-2">
+            {data.subscriptionActive && (
+              <Button
+                type="button"
+                size="icon"
+                variant="destructive"
+                onClick={data.stopChatSocket}
+                disabled={!data.subscriptionActive}
+                className="h-8 w-8 rounded-full"
+              >
+                <StopCircle className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              type="submit"
+              size="icon"
+              disabled={data.loading || !data.newMessage.trim()}
+              className="h-8 w-8 bg-white text-black border-none !rounded-full"
+            >
+              {data.loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowUp className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </form>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-slate-700">
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col overflow-hidden p-4">
+        {renderTabsMode()}
+
+        {data.error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{data.error}</AlertDescription>
+          </Alert>
+        )}
+
+        {renderMessages()}
+        {renderForm()}
       </div>
     </div>
   );
