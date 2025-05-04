@@ -511,6 +511,13 @@ export class MessageModel {
     return this.message.kwargs.content;
   }
 
+  getAIMessageModel(): AIMessageModel | undefined {
+    if (!this.isAIMessage() || !this.isAIMessageChunk()) {
+      return new AIMessageModel(this.message as AIMessageType);
+    }
+    return undefined;
+  }
+
   isHumanMessage(): boolean {
     const message = this.message;
     return message && message.id[message.id.length - 1] === 'HumanMessage';
@@ -533,8 +540,8 @@ export class MessageModel {
 }
 
 export class AIMessageModel extends MessageModel {
-  constructor(message: AIMessageType) {
-    super(message);
+  constructor(private aiMessage: AIMessageType) {
+    super(aiMessage);
   }
 
   getToolCalls(): {
@@ -543,8 +550,12 @@ export class AIMessageModel extends MessageModel {
     id: string;
     type: 'tool_call';
   }[] {
-    return this.message.kwargs.tool_calls || [];
+    return this.aiMessage.kwargs?.tool_calls || [];
   }
 
-  getToolCallsDisplay() {}
+  getToolCallsDisplay() {
+    return this.getToolCalls()
+      .map(({ name, args }) => `${name}: ${JSON.stringify(args)}`)
+      .join('\n');
+  }
 }

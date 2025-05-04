@@ -1,4 +1,4 @@
-import Navbar from '@/components/navbar';
+import { Navbar } from '@/components/navbar';
 import Chatbot from './components/chatbot';
 
 export default async function Page({
@@ -9,7 +9,7 @@ export default async function Page({
   const { threadId } = await params;
   return (
     <div>
-      <Navbar />
+      <Navbar backToHref="/thread" />
       <Chatbot threadId={threadId} />
     </div>
   );
