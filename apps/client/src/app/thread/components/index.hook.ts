@@ -88,7 +88,7 @@ export const useData = () => {
         console.log('Thread created:', data);
 
         // Redirect to the thread page
-        router.push(`/thread/${data.thread.id}`);
+        router.push(`/thread/${data.thread.id}?firstMessage=${message}`);
       } catch (error) {
         console.error('Error:', error);
         setError('Failed to create thread. Please try again.');

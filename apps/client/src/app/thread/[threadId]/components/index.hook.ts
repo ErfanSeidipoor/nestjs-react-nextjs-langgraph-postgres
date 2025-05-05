@@ -1,4 +1,4 @@
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Observable } from 'rxjs';
 
@@ -15,6 +15,7 @@ export const useData = (threadId: string) => {
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchParams = useSearchParams();
 
   const [messages, setMessages] = useState<
     (HumanMessageType | ToolMessageType | AIMessageChunkType | AIMessageType)[]
@@ -27,12 +28,13 @@ export const useData = (threadId: string) => {
   const [unsubscribe, setUnsubscribe] = useState<(() => void) | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [messageStream, setMessageStream] = useState('');
+  const [firstMessage, setFirstMessage] = useState('');
 
   /* -------------------------------- handlers -------------------------------- */
 
   // Scroll to bottom when messages change
 
-  const continueChatSocket = () => {
+  const continueChatSocket = (message?: string) => {
     if (subscriptionActive) return;
 
     const token = localStorage.getItem('token');
@@ -40,7 +42,7 @@ export const useData = (threadId: string) => {
 
     const queryParams = new URLSearchParams({
       token,
-      prompt: newMessage,
+      prompt: !message ? newMessage : message,
     }).toString();
 
     const eventSource = new EventSource(
@@ -51,13 +53,13 @@ export const useData = (threadId: string) => {
 
     const sseObservable = new Observable<MessageEvent<string>>((subscriber) => {
       eventSource.onopen = () => {
-        console.log('SSE connection opened');
+        // console.log('SSE connection opened');
         setLoading(true);
       };
 
       eventSource.onmessage = (event) => {
         const parsedData = JSON.parse(event.data) as ClientStatus;
-        console.log('New message:', parsedData.status, { event, parsedData });
+        // console.log('New message:', parsedData.status, { event, parsedData });
         if (parsedData.status === 'end') {
           eventSource.close();
           setSubscriptionActive(false);
@@ -67,7 +69,7 @@ export const useData = (threadId: string) => {
       };
 
       eventSource.onerror = (error) => {
-        console.log('SSE error:setSubscriptionActive:', subscriptionActive);
+        // console.log('SSE error:setSubscriptionActive:', subscriptionActive);
         eventSource.close();
         setLoading(false);
         setError('Something went wrong. Please try again.');
@@ -84,7 +86,7 @@ export const useData = (threadId: string) => {
 
       return () => {
         eventSource.close();
-        console.log('SSE connection closed');
+        // console.log('SSE connection closed');
         setLoading(false); // Stop loading when the connection is closed
       };
     });
@@ -126,9 +128,9 @@ export const useData = (threadId: string) => {
     }
   };
 
-  const continueChatApi = async () => {
+  const continueChatApi = async (message?: string) => {
     const token = localStorage.getItem('token');
-    if (!token || !threadId || !newMessage.trim()) return;
+    if (!token || !threadId || !newMessage.trim() || !message?.trim()) return;
 
     // Add the human message immediately for better UX
     const humanMessage: HumanMessageType = {
@@ -136,7 +138,7 @@ export const useData = (threadId: string) => {
       type: 'constructor',
       id: ['langchain_core', 'messages', 'HumanMessage'],
       kwargs: {
-        content: newMessage,
+        content: !message ? newMessage : message,
       },
     };
 
@@ -250,6 +252,29 @@ export const useData = (threadId: string) => {
 
     return () => clearTimeout(timer);
   }, [messages, loading]);
+
+  useEffect(() => {
+    const firstMessageEncode = searchParams.get('firstMessage') || '';
+    const firstMessageValue = decodeURIComponent(firstMessageEncode);
+    if (firstMessageValue) {
+      setFirstMessage(firstMessageValue);
+      router.push(`/thread/${threadId}`);
+    }
+  }, [searchParams.get('firstMessage')]);
+
+  useEffect(() => {
+    if (firstMessage) {
+      setTimeout(() => {
+        if (mode === 'api') {
+          console.log('first');
+          continueChatApi(firstMessage);
+        } else if (mode === 'socket') {
+          console.log('second');
+          continueChatSocket(firstMessage);
+        }
+      }, 300);
+    }
+  }, [firstMessage]);
 
   return {
     router,

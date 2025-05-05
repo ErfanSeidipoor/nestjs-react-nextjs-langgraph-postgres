@@ -12,7 +12,7 @@ import {
 import type React from 'react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -96,7 +96,6 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
                       <AvatarFallback className="bg-purple-100">
                         AI
                       </AvatarFallback>
-                      <AvatarImage src="/ai-assistant-icon.png" />
                     </Avatar>
                     <Card className="flex-1 overflow-hidden">
                       <CardContent className="p-3 text-sm bg-zinc-700">
@@ -155,7 +154,6 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
             <div className="flex items-start gap-3">
               <Avatar className="mt-0.5 h-8 w-8 bg-purple-100 text-purple-600">
                 <AvatarFallback className="bg-purple-100">AI</AvatarFallback>
-                <AvatarImage src="/ai-assistant-icon.png" />
               </Avatar>
               <Card className="flex-1 overflow-hidden">
                 <CardContent className="p-3 text-sm">
@@ -172,7 +170,6 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
             <div className="flex items-start gap-3">
               <Avatar className="mt-0.5 h-8 w-8 bg-purple-100 text-purple-600">
                 <AvatarFallback className="bg-purple-100">AI</AvatarFallback>
-                <AvatarImage src="/ai-assistant-icon.png" />
               </Avatar>
               <Card className="flex-1 overflow-hidden">
                 <CardContent className="flex items-center p-3 text-sm">
