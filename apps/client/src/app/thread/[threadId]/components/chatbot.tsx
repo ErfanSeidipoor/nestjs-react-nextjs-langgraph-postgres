@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { MessageModel } from '@models';
 import { useData } from './index.hook';
+import ReactMarkdown from 'react-markdown';
 
 interface ChatbotProps {
   threadId: string;
@@ -82,7 +83,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
                       <CardContent className="p-3 text-sm">
                         <div className="font-medium text-amber-800">Tool</div>
                         <div className="mt-1 whitespace-pre-wrap text-black/80">
-                          {message.getContent()}
+                          <ReactMarkdown>{message.getContent()}</ReactMarkdown>
                         </div>
                       </CardContent>
                     </Card>
@@ -101,8 +102,10 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
                       <CardContent className="p-3 text-sm bg-zinc-700">
                         <div className="font-medium">Assistant</div>
                         <div className="mt-1 whitespace-pre-wrap">
-                          {message.getContent() ||
-                            aiMessageModel?.getToolCallsDisplay()}
+                          <ReactMarkdown>
+                            {message.getContent() ||
+                              aiMessageModel?.getToolCallsDisplay()}
+                          </ReactMarkdown>
                         </div>
                       </CardContent>
                     </Card>
@@ -123,7 +126,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
                       <CardContent className="p-3 text-sm">
                         <div className="font-medium text-blue-800">You</div>
                         <div className="mt-1 whitespace-pre-wrap text-black/80">
-                          {message.getContent()}
+                          <ReactMarkdown>{message.getContent()}</ReactMarkdown>
                         </div>
                       </CardContent>
                     </Card>
@@ -197,7 +200,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
             className="text-white/80 pr-24 py-6 rounded-2xl border border-solid border-white/40 bg-black/40"
             ref={data.inputRef}
           />
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex gap-2">
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2">
             {data.subscriptionActive && (
               <Button
                 type="button"
