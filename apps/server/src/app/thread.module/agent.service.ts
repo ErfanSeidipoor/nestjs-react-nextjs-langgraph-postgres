@@ -10,6 +10,7 @@ import {
 import { ChatOpenAI } from '@langchain/openai';
 import { Injectable } from '@nestjs/common';
 import z from 'zod';
+import * as fs from 'fs';
 
 @Injectable()
 export class AgentService {
@@ -92,5 +93,13 @@ export class AgentService {
     return this.workflow.compile({
       checkpointer,
     });
+  }
+
+  async print() {
+    const app = this.workflow.compile();
+    const mainGraphBuffer = (
+      await (await app.getGraphAsync()).drawMermaidPng({})
+    ).arrayBuffer();
+    fs.writeFileSync('./graph.png', Buffer.from(await mainGraphBuffer));
   }
 }

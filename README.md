@@ -1,90 +1,191 @@
-# NestNextLangchain
+# Nest Next LangChain Project
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+This project is a **NestJS** and **Next.js** application designed to facilitate seamless communication between the client and server in a conversational mode. It leverages **RxJS** for reactive programming, enabling efficient and real-time data flow between components. Additionally, it incorporates the **LangGraph** framework to enhance AI-driven workflows and streamline graph-based data processing.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+## Project Structure
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+### Application: `server`
 
-## Finish your remote caching setup
+The `server` application is the backend service that handles user authentication, thread management, and AI-powered interactions.
 
-[Click here to finish setting up your workspace!](https://cloud.nx.app/connect/diJC8G1eWm)
+### **Workflow Structure**
 
+The following diagram illustrates the workflow structure of the application:
 
-## Generate a library
+![Workflow Structure](./graph.png)
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
+---
+
+### **Main Entry Point**
+
+- **File:** [`main.ts`](apps/server/src/main.ts)  
+   The main entry point of the application. It initializes the NestJS application and starts the server.
+
+---
+
+### **Modules**
+
+#### 1. **User Module**
+
+- **Purpose:** Handles user authentication and profile management.
+- **Files:**
+  - [`user.module.ts`](apps/server/src/app/user.module/user.module.ts): Defines the `UserModule` and its dependencies.
+  - [`user.service.ts`](apps/server/src/app/user.module/user.service.ts): Contains business logic for user authentication (signup, signin) and token validation.
+  - [`user.controller.ts`](apps/server/src/app/user.module/user.controller.ts): Exposes REST endpoints for user-related operations.
+
+#### 2. **Thread Module**
+
+- **Purpose:** Manages threads and interactions with AI workflows.
+- **Files:**
+  - [`thread.module.ts`](apps/server/src/app/thread.module/thread.module.ts): Defines the `ThreadModule` and its dependencies.
+  - [`thread.service.ts`](apps/server/src/app/thread.module/thread.service.ts): Contains business logic for thread creation, continuation, and retrieval.
+  - [`thread.controller.ts`](apps/server/src/app/thread.module/thread.controller.ts): Exposes REST and SSE endpoints for thread-related operations.
+  - [`checkpoiner.service.ts`](apps/server/src/app/thread.module/checkpoiner.service.ts): Manages checkpointing using PostgreSQL for AI workflows.
+  - [`agent.service.ts`](apps/server/src/app/thread.module/agent.service.ts): Implements AI workflows using LangChain and integrates tools for enhanced functionality.
+
+---
+
+### **Entities**
+
+#### 1. **User Entity**
+
+- **File:** [`user.entity.ts`](apps/server/src/app/postgres-db/entities/user.entity.ts)  
+   Represents the `User` table in the database. Includes fields like `id`, `username`, `password`, and relationships with threads.
+
+#### 2. **Thread Entity**
+
+- **File:** [`thread.entity.ts`](apps/server/src/app/postgres-db/entities/thread.entity.ts)  
+   Represents the `Thread` table in the database. Includes fields like `id`, `title`, `initialPrompt`, and relationships with users.
+
+---
+
+### **Environment Variables**
+
+The application uses environment variables for configuration. Ensure the following variables are set in a `.env` file:
+
+```env
+OPENAI_API_KEY=<your-openai-api-key>
+POSTGRES_DB_USERNAME=<your-db-username>
+POSTGRES_DB_PASSWORD=<your-db-password>
+POSTGRES_DB_HOST=<your-db-host>
+POSTGRES_DB_DATABASE=<your-db-name>
+POSTGRES_DB_PORT=<your-db-port>
+PORT=<application-port>
 ```
 
-## Run tasks
+---
 
-To build the library use:
+### **Environment Variables**
 
-```sh
-npx nx build pkg1
+The application uses environment variables for configuration. Ensure the following variables are set in a `.env` file:
+
+```bash
+npm install
 ```
 
-To run any task with Nx use:
+2. Start the server:
 
-```sh
-npx nx <target> <project-name>
-```
+   ```bash
+   npm run start
+   ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+3. Access the application at:
+   ```
+   http://localhost:<PORT>
+   ```
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+---
 
-## Versioning and releasing
+### **Endpoints Overview**
 
-To version and release the library use
+#### **User Endpoints**
 
-```
-npx nx release
-```
+- `POST /user/signup`: Register a new user.
+- `POST /user/signin`: Authenticate a user and retrieve a token.
+- `GET /user/profile`: Get the authenticated user's profile.
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+#### **Thread Endpoints**
 
-[Learn more about Nx release &raquo;](hhttps://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- `POST /thread`: Create a new thread.
+- `POST /thread/:threadId/continue`: Continue a thread with a new prompt.
+- `GET /thread`: Retrieve all threads for the authenticated user.
+- `GET /thread/:threadId`: Retrieve a specific thread.
+- `GET /thread/:threadId/message`: Retrieve messages for a thread.
 
-## Keep TypeScript project references up to date
+---
 
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
+### **Key Features**
 
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
+- **User Authentication:** Secure signup and signin with JWT-based token validation.
+- **Thread Management:** Create and manage threads with AI-driven interactions.
+- **AI Workflows:** Powered by LangChain, enabling advanced AI capabilities.
+- **PostgreSQL Integration:** Persistent storage for users, threads, and checkpoints.
 
-```sh
-npx nx sync
-```
+---
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+### Application: `client`
 
-```sh
-npx nx sync:check
-```
+The `client` application is the frontend service built with **Next.js**. It provides a user interface for authentication, thread management, and AI-powered interactions.
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+#### **Main Entry Point**
 
+- **File:** [`page.tsx`](apps/client/src/app/page.tsx)  
+   The main entry point of the client application. It renders the authentication page.
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+---
 
-## Install Nx Console
+#### **Components**
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+1. **Authentication Component**
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+   - **File:** [`index.tsx`](apps/client/src/app/components/index.tsx)  
+     Handles user authentication (sign-in and sign-up) and redirects authenticated users to the thread page.
 
-## Useful links
+2. **Thread Component**
 
-Learn more:
+   - **File:** [`index.tsx`](apps/client/src/app/thread/components/index.tsx)  
+     Manages thread creation and displays a list of threads for the authenticated user.
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+3. **Chatbot Component**
+   - **File:** [`chatbot.tsx`](apps/client/src/app/thread/[threadId]/components/chatbot.tsx)  
+     Handles AI-driven conversations within a specific thread.
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+---
+
+#### **Routes**
+
+1. **Authentication Page**
+
+   - **File:** [`page.tsx`](apps/client/src/app/page.tsx)  
+     Displays the authentication form for users to sign in or sign up.
+
+2. **Thread List Page**
+
+   - **File:** [`page.tsx`](apps/client/src/app/thread/page.tsx)  
+     Displays a list of threads and allows users to create new threads.
+
+3. **Thread Detail Page**
+   - **File:** [`page.tsx`](apps/client/src/app/thread/[threadId]/page.tsx)  
+     Displays the chatbot interface for a specific thread.
+
+---
+
+#### **TypeScript Declarations**
+
+- **File:** [`index.d.ts`](apps/client/index.d.ts)  
+   Declares module definitions for importing `.svg` files as React components.
+
+---
+
+#### **Key Features**
+
+- **Authentication:** Users can sign up or sign in to access their threads.
+- **Thread Management:** Users can create, view, and interact with threads.
+- **AI-Powered Conversations:** Seamless integration with AI workflows for thread-based interactions.
+- **Responsive Design:** Optimized for various screen sizes and devices.
+
+---
+
+### **License**
+
+This project is licensed under the MIT License.

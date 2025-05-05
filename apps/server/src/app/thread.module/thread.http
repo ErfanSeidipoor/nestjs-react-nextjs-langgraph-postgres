@@ -22,6 +22,10 @@ GET  http://localhost:4000/thread HTTP/1.1
 content-type: application/json
 Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNhbXBsZSIsImlkIjoiYzVlMjkwYTUtN2ZhYy00YzYwLTkxODctYWU5NWM5YmE3YWVjIiwiaWF0IjoxNzQ2MDg3NzE2LCJleHAiOjE3NDYxMjM3MTZ9.GstCUtuw_USPZ9Zpoih_04By1JBBUy0amHChT5I-YCg
 
+###
+POST  http://localhost:4000/thread/print HTTP/1.1
+content-type: application/json
+
 
 ###
 GET  http://localhost:4000/thread/05e5af79-790b-4dff-94a6-9cfc73fe23a0 HTTP/1.1

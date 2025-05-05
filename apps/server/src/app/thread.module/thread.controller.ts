@@ -13,11 +13,13 @@ import {
 import { Thread } from '../postgres-db/entities';
 import { UserService } from '../user.module/user.service';
 import { ThreadService } from './thread.service';
+import { AgentService } from './agent.service';
 
 @Controller('/thread')
 export class ThreadController {
   constructor(
     private readonly threadService: ThreadService,
+    private readonly agentService: AgentService,
     private readonly userService: UserService
   ) {}
 
@@ -105,5 +107,10 @@ export class ThreadController {
     const userId = validation.id;
 
     return this.threadService.getById(userId, threadId);
+  }
+
+  @Post('print')
+  print() {
+    return this.agentService.print();
   }
 }
