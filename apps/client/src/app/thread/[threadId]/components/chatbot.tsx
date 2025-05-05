@@ -12,7 +12,7 @@ import {
 import type React from 'react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { MessageModel } from '@models';
 import { useData } from './index.hook';
+import ReactMarkdown from 'react-markdown';
 
 interface ChatbotProps {
   threadId: string;
@@ -82,7 +83,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
                       <CardContent className="p-3 text-sm">
                         <div className="font-medium text-amber-800">Tool</div>
                         <div className="mt-1 whitespace-pre-wrap text-black/80">
-                          {message.getContent()}
+                          <ReactMarkdown>{message.getContent()}</ReactMarkdown>
                         </div>
                       </CardContent>
                     </Card>
@@ -96,14 +97,15 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
                       <AvatarFallback className="bg-purple-100">
                         AI
                       </AvatarFallback>
-                      <AvatarImage src="/ai-assistant-icon.png" />
                     </Avatar>
                     <Card className="flex-1 overflow-hidden">
                       <CardContent className="p-3 text-sm bg-zinc-700">
                         <div className="font-medium">Assistant</div>
                         <div className="mt-1 whitespace-pre-wrap">
-                          {message.getContent() ||
-                            aiMessageModel?.getToolCallsDisplay()}
+                          <ReactMarkdown>
+                            {message.getContent() ||
+                              aiMessageModel?.getToolCallsDisplay()}
+                          </ReactMarkdown>
                         </div>
                       </CardContent>
                     </Card>
@@ -124,7 +126,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
                       <CardContent className="p-3 text-sm">
                         <div className="font-medium text-blue-800">You</div>
                         <div className="mt-1 whitespace-pre-wrap text-black/80">
-                          {message.getContent()}
+                          <ReactMarkdown>{message.getContent()}</ReactMarkdown>
                         </div>
                       </CardContent>
                     </Card>
@@ -155,7 +157,6 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
             <div className="flex items-start gap-3">
               <Avatar className="mt-0.5 h-8 w-8 bg-purple-100 text-purple-600">
                 <AvatarFallback className="bg-purple-100">AI</AvatarFallback>
-                <AvatarImage src="/ai-assistant-icon.png" />
               </Avatar>
               <Card className="flex-1 overflow-hidden">
                 <CardContent className="p-3 text-sm">
@@ -172,7 +173,6 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
             <div className="flex items-start gap-3">
               <Avatar className="mt-0.5 h-8 w-8 bg-purple-100 text-purple-600">
                 <AvatarFallback className="bg-purple-100">AI</AvatarFallback>
-                <AvatarImage src="/ai-assistant-icon.png" />
               </Avatar>
               <Card className="flex-1 overflow-hidden">
                 <CardContent className="flex items-center p-3 text-sm">
@@ -200,7 +200,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ threadId }) => {
             className="text-white/80 pr-24 py-6 rounded-2xl border border-solid border-white/40 bg-black/40"
             ref={data.inputRef}
           />
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex gap-2">
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2">
             {data.subscriptionActive && (
               <Button
                 type="button"
